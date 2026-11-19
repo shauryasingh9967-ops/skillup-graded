@@ -54,7 +54,8 @@ export default function AppLayout() {
       <a href="#main" className="sr-only">Skip to content</a>
       <aside className={`sidebar ${open ? 'open' : ''}`} aria-label="Primary">
         <div className="brand">
-                    <div><strong>Skillup Graded</strong><span>Student management</span></div>
+          <span className="brand-mark" aria-hidden="true"><GraduationCap /></span>
+          <div><strong>Skillup Graded</strong><span>Student management</span></div>
         </div>
         <nav className="nav">
           {NAV.filter((n) => !n.admin || isAdmin).map((n) => (

@@ -58,11 +58,42 @@ export default function StudentForm() {
 
   const set = (k) => (e) => {
     const value = e.target.value;
-    setForm((f) => ({ ...f, [k]: value, ...(k === 'course' ? { batch: '' } : {}) }));
+    setForm((f) => ({ ...f, [k]: value, ...(k === 'course' ? { batch: '', assignedTeacher: '' } : {}) }));
     if (errors[k]) setErrors((x) => ({ ...x, [k]: undefined }));
   };
   const batchOptions = useMemo(() => (refs.data?.batches || []).filter((b) => b.course?._id === form.course), [refs.data, form.course]);
-  const teacherOptions = refs.data?.teachers || [];
+  // Only show teachers who teach at least one subject of the selected course
+  // (a teacher with no subjects listed is shown for every course).
+  const selectedCourse = useMemo(() => (refs.data?.courses || []).find((c) => c._id === form.course), [refs.data, form.course]);
+  const teacherOptions = useMemo(() => {
+    const all = refs.data?.teachers || [];
+    if (!selectedCourse) return all;
+    const courseSubjects = new Set(selectedCourse.subjects || []);
+    const filtered = all.filter((t) => {
+      const subs = t.teacherProfile?.subjects || [];
+      if (!subs.length) return true;
+      return subs.some((s) => courseSubjects.has(s));
+    });
+    return filtered.length ? filtered : all;
+  }, [refs.data, selectedCourse]);
+
+  // Suggest the next free Student ID (SKG-26-NNN) from the highest existing one.
+  const [generatingId, setGeneratingId] = useState(false);
+  const generateId = async () => {
+    setGeneratingId(true);
+    try {
+      const res = await studentService.list({ limit: 100 });
+      let max = 0;
+      for (const s of res.items || []) {
+        const m = /^SKG-26-(\d+)$/.exec((s.studentId || '').toUpperCase());
+        if (m) max = Math.max(max, parseInt(m[1], 10));
+      }
+      setForm((f) => ({ ...f, studentId: `SKG-26-${String(max + 1).padStart(3, '0')}` }));
+      if (errors.studentId) setErrors((x) => ({ ...x, studentId: undefined }));
+    } catch (err) {
+      setFormError(err.message || 'Could not generate an ID. Type one manually.');
+    } finally { setGeneratingId(false); }
+  };
 
   const submit = async (e) => {
     e.preventDefault();
@@ -101,7 +132,12 @@ export default function StudentForm() {
           <div className="form-section">
             <h3>Student details</h3><p>Name and contact details.</p>
             <div className="form-grid">
-              <FormField label="Student ID" required error={errors.studentId} hint="Must be unique. Letters are stored in capitals."><Input value={form.studentId} onChange={set('studentId')} maxLength={30} autoComplete="off" /></FormField>
+              <FormField label="Student ID" required error={errors.studentId} hint={editing ? 'Must be unique. Letters are stored in capitals.' : 'Must be unique. Use Generate to get the next free ID.'}>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <Input value={form.studentId} onChange={set('studentId')} maxLength={30} autoComplete="off" disabled={editing} style={{ flex: 1 }} />
+                  {!editing && <Button type="button" onClick={generateId} disabled={generatingId} loading={generatingId}>Generate</Button>}
+                </div>
+              </FormField>
               <FormField label="Full name" required error={errors.fullName}><Input value={form.fullName} onChange={set('fullName')} maxLength={120} autoComplete="off" /></FormField>
               <FormField label="Phone" required error={errors.phone}><Input type="tel" value={form.phone} onChange={set('phone')} inputMode="tel" autoComplete="off" /></FormField>
               <FormField label="Email" error={errors.email} hint="Optional"><Input type="email" value={form.email} onChange={set('email')} autoComplete="off" /></FormField>
@@ -124,7 +160,7 @@ export default function StudentForm() {
               <FormField label="Batch" required error={errors.batch} hint={form.course && !batchOptions.length ? 'This course has no active batch yet.' : undefined}>
                 <Select value={form.batch} onChange={set('batch')} disabled={!form.course} placeholder={form.course ? 'Select a batch' : 'Select a course first'}>{batchOptions.map((b) => <option key={b._id} value={b._id}>{b.name}</option>)}</Select>
               </FormField>
-              <FormField label="Assigned teacher" required error={errors.assignedTeacher}><Select value={form.assignedTeacher} onChange={set('assignedTeacher')} placeholder="Select a teacher">{teacherOptions.map((t) => <option key={t._id} value={t._id}>{t.name}</option>)}</Select></FormField>
+              <FormField label="Assigned teacher" required error={errors.assignedTeacher} hint={form.course ? 'Only teachers of this course are listed.' : 'Select a course first to filter by subject.'}><Select value={form.assignedTeacher} onChange={set('assignedTeacher')} placeholder="Select a teacher">{teacherOptions.map((t) => <option key={t._id} value={t._id}>{t.name}</option>)}</Select></FormField>
               <FormField label="Admission date" required error={errors.admissionDate}><Input type="date" value={form.admissionDate} onChange={set('admissionDate')} max={todayStr()} /></FormField>
               {editing && <FormField label="Status"><Select value={form.status} onChange={set('status')}><option value="ACTIVE">Active</option><option value="INACTIVE">Inactive</option></Select></FormField>}
             </div>

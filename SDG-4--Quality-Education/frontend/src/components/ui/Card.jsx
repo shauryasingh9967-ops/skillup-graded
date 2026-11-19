@@ -12,12 +12,15 @@ export function Card({ title, subtitle, actions, children, flush, className = ''
   );
 }
 
-export function KpiCard({ label, value, sub, tone = '' }) {
+export function KpiCard({ label, value, sub, tone = '', icon: Icon }) {
   return (
     <div className={`card kpi ${tone ? `tone-${tone}` : ''}`}>
-      <div className="kpi-label">{label}</div>
-      <div className="kpi-value">{value}</div>
-      {sub && <div className="kpi-sub">{sub}</div>}
+      {Icon && <span className="kpi-icon" aria-hidden="true"><Icon size={19} /></span>}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div className="kpi-label">{label}</div>
+        <div className="kpi-value">{value}</div>
+        {sub && <div className="kpi-sub">{sub}</div>}
+      </div>
     </div>
   );
 }

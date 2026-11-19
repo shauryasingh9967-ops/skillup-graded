@@ -8,6 +8,12 @@ const { notFound, errorHandler } = require('./middleware/error');
 
 const app = express();
 
+// Behind Render / any reverse proxy, express-rate-limit must key on the real
+// client IP (X-Forwarded-For), not the load-balancer IP. Without this, all
+// users share one login-attempt bucket and the limiter throws a
+// ValidationError. `1` trusts a single hop (the platform proxy).
+app.set('trust proxy', 1);
+
 app.disable('x-powered-by');
 app.use(helmet());
 app.use(
