@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, GraduationCap } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import Button from '../../components/ui/Button';
 import { FormField, Input } from '../../components/ui/Form';
@@ -38,7 +38,10 @@ export default function Login() {
   return (
     <div className="auth">
       <main className="auth-card">
-        <div className="auth-brand"><strong>Skillup Graded</strong><span>Student management</span></div>
+        <div className="auth-brand">
+          <span className="auth-mark" aria-hidden="true"><GraduationCap /></span>
+          <div><strong>Skillup Graded</strong><span>Education Institute Management</span></div>
+        </div>
         <h2>Sign in</h2>
         <form onSubmit={submit} noValidate className="stack">
           {notice && <Alert tone="warning">{notice}</Alert>}
