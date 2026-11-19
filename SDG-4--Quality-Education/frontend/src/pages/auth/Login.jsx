@@ -1,16 +1,11 @@
 import { useState } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, GraduationCap } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import Button from '../../components/ui/Button';
 import { FormField, Input } from '../../components/ui/Form';
 import { Alert } from '../../components/ui/Feedback';
 import { EMAIL_RE } from '../../utils/format';
-
-const DEMO = {
-  admin: { label: 'Demo admin', email: 'admin@skillup.demo', password: 'Admin@12345' },
-  teacher: { label: 'Demo teacher', email: 'priya.nair@skillup.demo', password: 'Teacher@12345' },
-};
 
 export default function Login() {
   const { user, login, notice, booting } = useAuth();
@@ -40,19 +35,10 @@ export default function Login() {
     } finally { setBusy(false); }
   };
 
-  const fillDemo = (kind) => {
-    const d = DEMO[kind];
-    setForm({ email: d.email, password: d.password });
-    setErrors({}); setFormError('');
-  };
-
   return (
     <div className="auth">
       <main className="auth-card">
-        <div className="auth-brand">
-          <span className="auth-mark" aria-hidden="true"><GraduationCap /></span>
-          <div><strong>Skillup Graded</strong><span>Education Institute Management</span></div>
-        </div>
+        <div className="auth-brand"><strong>Skillup Graded</strong><span>Student management</span></div>
         <h2>Sign in</h2>
         <form onSubmit={submit} noValidate className="stack">
           {notice && <Alert tone="warning">{notice}</Alert>}
@@ -65,15 +51,6 @@ export default function Login() {
           </FormField>
           <Button variant="primary" type="submit" loading={busy} style={{ height: 40 }}>Sign in</Button>
         </form>
-        <div className="demo-box">
-          <strong>Demo access</strong>
-          <p>Try the app with a demo account — no signup needed.</p>
-          <div className="demo-row">
-            <button type="button" className="btn btn-sm" onClick={() => fillDemo('admin')}>Use demo admin</button>
-            <button type="button" className="btn btn-sm" onClick={() => fillDemo('teacher')}>Use demo teacher</button>
-          </div>
-          <p className="muted" style={{ fontSize: 12.5 }}>Admin: admin@skillup.demo · Teacher: priya.nair@skillup.demo</p>
-        </div>
         <p className="muted" style={{ marginTop: 20, fontSize: 13 }}>Accounts are created by the institute administrator. Forgot your password? Ask the administrator to reset it.</p>
       </main>
     </div>
